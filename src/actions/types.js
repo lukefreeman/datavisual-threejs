@@ -1,0 +1,1 @@
+export const FETCH_FLIGHT_DATA = "FETCH_FLIGHT_DATA";
