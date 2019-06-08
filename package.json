@@ -38,6 +38,7 @@
   "dependencies": {
     "ajv": "^6.10.0",
     "deck.gl": "^7.0.10",
+    "postprocessing": "^6.5.0",
     "react": "^16.8.6",
     "react-dat-gui": "^3.0.0",
     "react-dom": "^16.8.6",

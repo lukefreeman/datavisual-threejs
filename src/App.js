@@ -4,6 +4,7 @@ import DatGui, { DatBoolean, DatColor, DatNumber, DatString } from 'react-dat-gu
 import {connect} from 'react-redux';
 import styled from 'styled-components';
 import * as THREE from 'three';
+import { VignetteEffect, HueSaturationEffect, EffectComposer, EffectPass, RenderPass } from "postprocessing";
 const OrbitControls = require("three-orbit-controls")(THREE);
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import Stats from 'stats.js';
@@ -16,6 +17,7 @@ class App extends Component {
 
         this.state = {
             data: {
+                hue: 0,
                 package: 'react-dat-gui',
                 power: 9000,
                 isAwesome: true,
@@ -25,7 +27,9 @@ class App extends Component {
     }   
 
     handleUpdate(data) {
-        this.setState({ data })
+        this.setState({ data });
+       
+        this.HueSat.effects[0].setHue(data.hue);
     }
 
     setWireframe() {
@@ -41,19 +45,19 @@ class App extends Component {
         
         const loader = new GLTFLoader();
         
-        // === THREE.JS CODE START ===
+   
         var scene = new THREE.Scene();
         scene.background = new THREE.Color( 0xcccccc );
 
         var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-        //camera.position.set(0,0,0);
+       
 
         var renderer = new THREE.WebGLRenderer({ alpha: false });
         renderer.setPixelRatio( window.devicePixelRatio );
         renderer.setSize( window.innerWidth, window.innerHeight );
       
-renderer.gammaOutput = true;
-
+        renderer.gammaInput = true;
+        renderer.gammaOutput = true;
 
         this.mount.appendChild( renderer.domElement );
 
@@ -112,10 +116,41 @@ renderer.gammaOutput = true;
                 //directionalLight.position.set(object.position.x,object.position.y+5500,object.position.z);
                 scene.add( directionalLight );
             
+             
+                //post processing ---
+
+				const composer = new EffectComposer(renderer);
+
+                //vignette --
+                const vignette = new EffectPass(camera, new VignetteEffect({
+                    darkness: 0.4,
+                    offset: 0.3,
+                }));
+
+                
+
+                //HueSat
+                this.HueSat = new EffectPass(camera, new HueSaturationEffect({
+                    hue: this.state.data.hue,
+                    sat: this.state.data.saturation
+                }));
+            
+                this.HueSat.renderToScreen = true;
+
+                composer.addPass(new RenderPass(scene, camera));
+
+                composer.addPass(vignette);
+                composer.addPass(this.HueSat);
+
+              
+               
+                
+                
+                
             
             var animate = function () {
                 stats.begin();
-                    renderer.render( scene, camera );
+                    composer.render( scene, camera );
                 stats.end();
 
             requestAnimationFrame( animate );
@@ -127,17 +162,20 @@ renderer.gammaOutput = true;
         this.controls = new OrbitControls(camera, renderer.domElement);
     
         animate();
-        // === THREE.JS EXAMPLE CODE END ===
+
     }
 
     
     render() {
 
         const { data } = this.state;
-        
+
         return (
             <div>
-                <DatGui data={data} onUpdate={this.handleUpdate}>
+                <DatGui data={data} onUpdate={this.handleUpdate.bind(this)}>
+                    <DatNumber path='hue' label='Colour' min={0} max={6} step={.01} />
+                    <DatBoolean path='wireframe' label='Wireframe' />
+
                     <DatString path='package' label='Package' />
                     <DatNumber path='power' label='Power' min={9000} max={9999} step={1} />
                     <DatBoolean path='isAwesome' label='Awesome?' />
