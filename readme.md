@@ -1,14 +1,14 @@
 # THREE.JS Datavisual
 A datavisual presentation using THREE.js
 
-##Demo
+## Demo
 [datavisual-threejs.netlify.com](https://datavisual-threejs.netlify.com/)
 
-##Install
+## Install
 
 	$ npm install
 
-##Run
+## Run
 
     $ npm start
 
