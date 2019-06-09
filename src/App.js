@@ -9,6 +9,8 @@ import Stats from 'stats.js';
 import TWEEN from '@tweenjs/tween.js';
 import styled from 'styled-components';
 
+import { fetchSettings, updateSettings } from './actions/website';
+
 const OrbitControls = Controls(THREE);
 
 class App extends Component {
@@ -26,15 +28,13 @@ class App extends Component {
         this.directionalLight;
 
         this.state = {
-            loading:0,
-            data: {
-                hue: 0,
-                ambientLight: '#7F3636',
-                directionalLight: '#ffffff',
-                wireframe: false
-            }
+            loaded:false
         }
-    }   
+    }  
+    
+    componentWillMount() {
+        this.props.fetchSettings();
+    }
 
 	/*
 	|--------------------------------------------------------------------------
@@ -42,9 +42,11 @@ class App extends Component {
 	|--------------------------------------------------------------------------
 	*/
     handleUpdate(data) {
-        this.setState({ data });
+        this.props.updateSettings(data);
+
+        //update THREE --- 
         this.HueSat.effects[0].setHue(data.hue);
-        this.state.data.wireframe !== data.wireframe ? this.setWireframe() : null;
+        this.props.data.wireframe !== data.wireframe ? this.setWireframe() : null;
 
         this.ambientLight.color = new THREE.Color(this.hex2rgb(data.ambientLight));
         this.directionalLight.color = new THREE.Color(this.hex2rgb(data.directionalLight));
@@ -73,7 +75,7 @@ class App extends Component {
     setWireframe() {
         this.scene.traverse( ( child ) => {
             if ( child.isMesh ) {
-                child.material.wireframe = !this.state.data.wireframe;
+                child.material.wireframe = !this.props.data.wireframe;
             }
         });
     }
@@ -151,7 +153,7 @@ class App extends Component {
             },
             
             xhr => {
-                this.setState({ loading: ( (xhr.loaded / xhr.total) * 100)  + '%' });
+                if(xhr.loaded === xhr.total) this.setState({ loaded: true });
             } 
         );
     }
@@ -162,10 +164,10 @@ class App extends Component {
 	|--------------------------------------------------------------------------
 	*/
     setLighting() {
-        this.ambientLight = new THREE.AmbientLight( this.state.data.ambientLight, 1.7 );
+        this.ambientLight = new THREE.AmbientLight( this.props.data.ambientLight, 1.7 );
         this.scene.add( this.ambientLight );
 
-        this.directionalLight = new THREE.DirectionalLight( this.state.data.directionalLight , 2);
+        this.directionalLight = new THREE.DirectionalLight( this.props.data.directionalLight , 2);
         this.scene.add( this.directionalLight );
     }
 
@@ -185,8 +187,8 @@ class App extends Component {
 
         //HueSat ---
         this.HueSat = new EffectPass(this.camera, new HueSaturationEffect({
-            hue: this.state.data.hue,
-            sat: this.state.data.saturation
+            hue: this.props.data.hue,
+            sat: this.props.data.saturation
         }));
         
         //add effects ---
@@ -261,11 +263,11 @@ class App extends Component {
 	*/
     render() {
 
-        const { data } = this.state;
+        const { data } = this.props;
 
         return (
             <div>
-                <Loading pc={this.state.loading} >
+                <Loading loaded={this.state.loaded} >
                     <div className="sk-folding-cube">
                         <div className="sk-cube1 sk-cube"></div>
                         <div className="sk-cube2 sk-cube"></div>
@@ -274,10 +276,10 @@ class App extends Component {
                     </div>
                 </Loading>
                 <DatGui data={data} onUpdate={this.handleUpdate.bind(this)}>
-                    <DatNumber path='hue' label='Colour' min={-3.142} max={3.142} step={.01} />
-                    <DatBoolean path='wireframe' label='Wireframe' value={this.state.data.wireframe} />
-                    <DatColor path='ambientLight' label='Ambient Light' value={this.state.data.ambientLight} />
-                    <DatColor path='directionalLight' label='Directional Light' value={this.state.data.directionalLight} />
+                    <DatNumber path='hue' label='Colour' min={-3.142} max={3.142} step={.01} value={this.props.data.hue} />
+                    <DatBoolean path='wireframe' label='Wireframe' value={this.props.data.wireframe} />
+                    <DatColor path='ambientLight' label='Ambient Light' value={this.props.data.ambientLight} />
+                    <DatColor path='directionalLight' label='Directional Light' value={this.props.data.directionalLight} />
                 </DatGui>
                 <div ref={ref => (this.mount = ref)} />
             </div>
@@ -287,10 +289,11 @@ class App extends Component {
 
 function mapStateToProps(state){
 	return { 
+        data: state.website.data
 	}
 }
 
-export default connect(mapStateToProps, {  })(App);
+export default connect(mapStateToProps, { fetchSettings, updateSettings })(App);
 
 const Loading = styled.div`
     position:absolute;
@@ -299,6 +302,6 @@ const Loading = styled.div`
     z-index:99;
     transform:translateX(-50%) translateY(-50%);
     font-size:30px;
-    display: ${(props) => props.pc === '100%' ? 'none' : 'block'}
+    display: ${(props) => props.loaded === true ? 'none' : 'block'}
     color:#000;
 `

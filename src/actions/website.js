@@ -1,22 +1,15 @@
-import { FETCH_FLIGHT_DATA } from './types';
-import flightData from '../flightData';
+import { FETCH_SETTINGS, UPDATE_SETTINGS } from './types';
 
-export function fetchFlightData() {
-
-	const data = flightData.map(flight => {
-		return {
-				from: {
-						coordinates: [flight[0][1], flight[0][0]],
-				},
-				to: {
-						coordinates: [flight[1][1], flight[1][0]]
-				}
-		}
-	});
-
+export function fetchSettings() {
 	return {
-		type: FETCH_FLIGHT_DATA,
+		type: FETCH_SETTINGS,
+		payload: []
+  	};
+}
+
+export function updateSettings(data) {
+	return {
+		type: UPDATE_SETTINGS,
 		payload: data
-  };
-    
+  	};  
 }

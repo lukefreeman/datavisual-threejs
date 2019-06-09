@@ -1,15 +1,19 @@
-import { FETCH_FLIGHT_DATA } from '../actions/types';
+import { UPDATE_SETTINGS } from '../actions/types';
 
 const INITIAL_STATE = {
-	flightData: []
+	data: {
+		hue: 0,
+		ambientLight: '#7F3636',
+		directionalLight: '#ffffff',
+		wireframe: false
+	}
 };
 
 export default function(state = INITIAL_STATE, action) {
 
 	switch(action.type) {
-		case FETCH_FLIGHT_DATA:
-			console.log('reducer flight data... ')
-			return {...state, flightData: action.payload}
+		case UPDATE_SETTINGS:
+			return {...state, data: action.payload}
 		default:
 			return state;
 	}
