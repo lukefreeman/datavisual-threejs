@@ -36,6 +36,7 @@
     "webpack-dev-server": "^3.4.1"
   },
   "dependencies": {
+    "@tweenjs/tween.js": "^17.4.0",
     "ajv": "^6.10.0",
     "deck.gl": "^7.0.10",
     "postprocessing": "^6.5.0",

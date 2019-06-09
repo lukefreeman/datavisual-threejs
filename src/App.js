@@ -1,13 +1,13 @@
 
 import React, { Component } from 'react';
-import DatGui, { DatBoolean, DatColor, DatNumber, DatString } from 'react-dat-gui';
+import DatGui, { DatBoolean, DatColor, DatNumber } from 'react-dat-gui';
 import {connect} from 'react-redux';
-import styled from 'styled-components';
 import * as THREE from 'three';
 import { VignetteEffect, HueSaturationEffect, EffectComposer, EffectPass, RenderPass } from "postprocessing";
 const OrbitControls = require("three-orbit-controls")(THREE);
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import Stats from 'stats.js';
+import TWEEN from '@tweenjs/tween.js';
 
 
 class App extends Component {
@@ -15,51 +15,57 @@ class App extends Component {
     constructor() {
         super();
 
+        this.scene;
+        this.camera;
+        this.renderer;
+        this.controls;
+
         this.state = {
             data: {
                 hue: 0,
-                package: 'react-dat-gui',
-                power: 9000,
-                isAwesome: true,
-                feelsLike: '#2FA1D6',
+                ambientLight: 0xd30000,
+                wireframe: false
             }
         }
     }   
 
     handleUpdate(data) {
         this.setState({ data });
-       
         this.HueSat.effects[0].setHue(data.hue);
+
+        this.state.data.wireframe !== data.wireframe ? this.setWireframe() : null;
     }
 
     setWireframe() {
-        
+        this.scene.traverse( ( child ) => {
+            if ( child.isMesh ) {
+                child.material.wireframe = !this.state.data.wireframe;
+            }
+        });
     }
 
     componentDidMount(){
 
-
         var stats = new Stats();
-        stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+        stats.showPanel( 0 );
         document.body.appendChild( stats.dom );
         
         const loader = new GLTFLoader();
-        
    
-        var scene = new THREE.Scene();
-        scene.background = new THREE.Color( 0xcccccc );
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color( 0xCCCCCC );
 
-        var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+        this.camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
        
 
-        var renderer = new THREE.WebGLRenderer({ alpha: false });
-        renderer.setPixelRatio( window.devicePixelRatio );
-        renderer.setSize( window.innerWidth, window.innerHeight );
+        this.renderer = new THREE.WebGLRenderer({ alpha: false });
+        this.renderer.setPixelRatio( window.devicePixelRatio );
+        this.renderer.setSize( window.innerWidth, window.innerHeight );
       
-        renderer.gammaInput = true;
-        renderer.gammaOutput = true;
+        this.renderer.gammaInput = true;
+        this.renderer.gammaOutput = true;
 
-        this.mount.appendChild( renderer.domElement );
+        this.mount.appendChild( this.renderer.domElement );
 
         loader.load( './DEM_RAST.pdf.gltf', 
             gltf => {
@@ -67,16 +73,14 @@ class App extends Component {
                 const root = gltf.scene;
                 const object = root;
 
-                scene.add(root);
+                this.scene.add(root);
 
                 root.traverse( function ( child ) {
                     
-                    if( child.type == "Line" || child.type == "Points") child.visible = false;
-
-                    if ( child.isMesh ) {
-                        //child.material.wireframe = true;
+                    if( child.type === "Line" || child.type === "Points") {
+                        child.visible = false;
                     }
-        
+
                 });
 
                 object.updateMatrixWorld();
@@ -87,70 +91,77 @@ class App extends Component {
                 object.position.x += (object.position.x - center.x);
                 object.position.y += (object.position.y - center.y);
                 object.position.z += (object.position.z - center.z);
-                this.controls.maxDistance = size * 10;
-                camera.position.copy(center);
-                camera.position.x += size / 2.0;
-                camera.position.y += size / 5.0;
-                camera.position.z += size / 2.0;
-                camera.near = size / 100;
-                camera.far = size * 100;
-                camera.updateProjectionMatrix();
-                camera.lookAt(center);
-
-                console.log(root, 'object');
-
                 
+                this.camera.position.copy(center);
+                this.camera.position.x += size / 2.0;
+                this.camera.position.y += size / 5.0;
+                this.camera.position.z += size / 2.0;
+                this.camera.near = size / 100;
+                this.camera.far = size * 100;
+                this.camera.updateProjectionMatrix();
+                this.camera.lookAt(center);
+                
+                this.camera.position.x = 176270.75252929013;
+                this.camera.position.y = -26073.99366690377;
+                this.camera.position.z = 39148.29418709834;
+
+                this.controls.maxDistance = size * 10;
+
+                var t = new TWEEN.Tween({
+                        x:176270.75252929013,
+                        y:-26073.99366690377,
+                        z:39148.29418709834
+                    })
+                    .to({x: 491010.04088835354, y: 317950.63986114773, z: 100720.7299043877}, 6000)
+                    .easing(TWEEN.Easing.Linear.None)
+                    .onUpdate((e)=> {
+                        this.camera.position.set(e.x, e.y, e.z);
+                });
+                
+                t.delay(500);
+                t.start();
+
             },
             
             xhr => {
                 console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-            }
+            } 
         );
 
-            camera.position.z = 0;
-            
-            var ambientLight = new THREE.AmbientLight( 0xd30000, 1.6 );
-            scene.add( ambientLight );
+       
+        this.controls = new OrbitControls(this.camera, this.renderer.domElement);
 
-            var directionalLight = new THREE.DirectionalLight( 0xffffff , 2);
-                //directionalLight.position.set(object.position.x,object.position.y+5500,object.position.z);
-                scene.add( directionalLight );
-            
+            var ambientLight = new THREE.AmbientLight( 0xd30000, 1.7 );
+            this.scene.add( ambientLight );
+
+            var directionalLight = new THREE.DirectionalLight( '0xffffff' , 2);
+            this.scene.add( directionalLight );
              
                 //post processing ---
-
-				const composer = new EffectComposer(renderer);
+				const composer = new EffectComposer(this.renderer);
 
                 //vignette --
-                const vignette = new EffectPass(camera, new VignetteEffect({
+                const vignette = new EffectPass(this.camera, new VignetteEffect({
                     darkness: 0.4,
                     offset: 0.3,
                 }));
 
-                
-
                 //HueSat
-                this.HueSat = new EffectPass(camera, new HueSaturationEffect({
+                this.HueSat = new EffectPass(this.camera, new HueSaturationEffect({
                     hue: this.state.data.hue,
                     sat: this.state.data.saturation
                 }));
-            
-                this.HueSat.renderToScreen = true;
-
-                composer.addPass(new RenderPass(scene, camera));
-
+                
+                composer.addPass(new RenderPass(this.scene, this.camera));
                 composer.addPass(vignette);
                 composer.addPass(this.HueSat);
-
-              
-               
-                
-                
-                
+                this.HueSat.renderToScreen = true;
             
-            var animate = function () {
+            var animate =  () => {
                 stats.begin();
-                    composer.render( scene, camera );
+                    TWEEN.update();
+                    composer.render( this.scene, this.camera );
+                    this.controls.update();
                 stats.end();
 
             requestAnimationFrame( animate );
@@ -159,8 +170,6 @@ class App extends Component {
         
         };
 
-        this.controls = new OrbitControls(camera, renderer.domElement);
-    
         animate();
 
     }
@@ -174,12 +183,7 @@ class App extends Component {
             <div>
                 <DatGui data={data} onUpdate={this.handleUpdate.bind(this)}>
                     <DatNumber path='hue' label='Colour' min={0} max={6} step={.01} />
-                    <DatBoolean path='wireframe' label='Wireframe' />
-
-                    <DatString path='package' label='Package' />
-                    <DatNumber path='power' label='Power' min={9000} max={9999} step={1} />
-                    <DatBoolean path='isAwesome' label='Awesome?' />
-                    <DatColor path='feelsLike' label='Feels Like' />
+                    <DatBoolean path='wireframe' label='Wireframe' value={this.state.data.wireframe} />
                 </DatGui>
                 <div ref={ref => (this.mount = ref)} />
             </div>
