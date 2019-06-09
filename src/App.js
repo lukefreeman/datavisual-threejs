@@ -23,12 +23,14 @@ class App extends Component {
         this.model;
         this.composer;
         this.ambientLight;
+        this.directionalLight;
 
         this.state = {
             loading:0,
             data: {
                 hue: 0,
-                ambientLight: '#d30000',
+                ambientLight: '#7F3636',
+                directionalLight: '#ffffff',
                 wireframe: false
             }
         }
@@ -44,10 +46,23 @@ class App extends Component {
         this.HueSat.effects[0].setHue(data.hue);
         this.state.data.wireframe !== data.wireframe ? this.setWireframe() : null;
 
-        const color = data.ambientLight.replace('#','0x');
-        const ambient = new THREE.Color(parseInt(color));
-        this.ambientLight.color = ambient;
-       
+        this.ambientLight.color = new THREE.Color(this.hex2rgb(data.ambientLight));
+        this.directionalLight.color = new THREE.Color(this.hex2rgb(data.directionalLight));
+    }
+
+    /*
+	|--------------------------------------------------------------------------
+	| Hex2RGB helper
+	|--------------------------------------------------------------------------
+	*/
+    hex2rgb(hex) {
+        var h=hex.replace('#', '');
+        h =  h.match(new RegExp('(.{'+h.length/3+'})', 'g'));
+
+        for(var i=0; i<h.length; i++)
+            h[i] = parseInt(h[i].length==1? h[i]+h[i]:h[i], 16);
+
+        return 'rgb('+h.join(',')+')';
     }
 
 	/*
@@ -150,8 +165,8 @@ class App extends Component {
         this.ambientLight = new THREE.AmbientLight( this.state.data.ambientLight, 1.7 );
         this.scene.add( this.ambientLight );
 
-        const directionalLight = new THREE.DirectionalLight( 0xffffff , 2);
-        this.scene.add( directionalLight );
+        this.directionalLight = new THREE.DirectionalLight( this.state.data.directionalLight , 2);
+        this.scene.add( this.directionalLight );
     }
 
     /*
@@ -250,11 +265,19 @@ class App extends Component {
 
         return (
             <div>
-                <Loading pc={this.state.loading} >{this.state.loading}</Loading>
+                <Loading pc={this.state.loading} >
+                    <div className="sk-folding-cube">
+                        <div className="sk-cube1 sk-cube"></div>
+                        <div className="sk-cube2 sk-cube"></div>
+                        <div className="sk-cube4 sk-cube"></div>
+                        <div className="sk-cube3 sk-cube"></div>
+                    </div>
+                </Loading>
                 <DatGui data={data} onUpdate={this.handleUpdate.bind(this)}>
                     <DatNumber path='hue' label='Colour' min={-3.142} max={3.142} step={.01} />
                     <DatBoolean path='wireframe' label='Wireframe' value={this.state.data.wireframe} />
                     <DatColor path='ambientLight' label='Ambient Light' value={this.state.data.ambientLight} />
+                    <DatColor path='directionalLight' label='Directional Light' value={this.state.data.directionalLight} />
                 </DatGui>
                 <div ref={ref => (this.mount = ref)} />
             </div>
