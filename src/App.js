@@ -153,6 +153,7 @@ class App extends Component {
             },
             
             xhr => {
+                console.log(xhr.loaded , xhr.total)
                 if(xhr.loaded === xhr.total) this.setState({ loaded: true });
             } 
         );
