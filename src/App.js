@@ -265,6 +265,8 @@ class App extends Component {
 
         const { data } = this.props;
 
+        console.log(this.state.loaded)
+
         return (
             <div>
                 <Loading loaded={this.state.loaded ? 1 : 0} >
