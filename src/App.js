@@ -302,6 +302,6 @@ const Loading = styled.div`
     z-index:99;
     transform:translateX(-50%) translateY(-50%);
     font-size:30px;
-    display: ${(props) => props.loaded === true ? 'none' : 'block'}
+    display: ${(props) => props.loaded === 'true' ? 'none' : 'block'}
     color:#000;
 `
