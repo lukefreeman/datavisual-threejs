@@ -128,8 +128,8 @@ class App extends Component {
             },
             
             xhr => {
-                console.log(Math.floor(xhr.loaded / xhr.total * 100 ));
-                this.setState({ loading: ( Math.floor(xhr.loaded / xhr.total * 100 ) ) + '%' });
+                console.log((xhr.loaded / xhr.total) * 100 );
+                this.setState({ loading: ( (xhr.loaded / xhr.total) * 100)  + '%' });
             } 
         );
     }
