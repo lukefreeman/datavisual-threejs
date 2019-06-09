@@ -3,11 +3,13 @@ import DatGui, { DatBoolean, DatColor, DatNumber } from 'react-dat-gui';
 import {connect} from 'react-redux';
 import * as THREE from 'three';
 import { VignetteEffect, HueSaturationEffect, EffectComposer, EffectPass, RenderPass } from "postprocessing";
-const OrbitControls = require("three-orbit-controls")(THREE);
+import * as Controls from 'three-orbit-controls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import Stats from 'stats.js';
 import TWEEN from '@tweenjs/tween.js';
 import styled from 'styled-components';
+
+const OrbitControls = Controls(THREE);
 
 class App extends Component {
 
@@ -20,12 +22,13 @@ class App extends Component {
         this.controls;
         this.model;
         this.composer;
+        this.ambientLight;
 
         this.state = {
             loading:0,
             data: {
                 hue: 0,
-                ambientLight: 0xd30000,
+                ambientLight: '#d30000',
                 wireframe: false
             }
         }
@@ -40,6 +43,11 @@ class App extends Component {
         this.setState({ data });
         this.HueSat.effects[0].setHue(data.hue);
         this.state.data.wireframe !== data.wireframe ? this.setWireframe() : null;
+
+        const color = data.ambientLight.replace('#','0x');
+        const ambient = new THREE.Color(parseInt(color));
+        this.ambientLight.color = ambient;
+       
     }
 
 	/*
@@ -128,7 +136,6 @@ class App extends Component {
             },
             
             xhr => {
-                console.log((xhr.loaded / xhr.total) * 100 );
                 this.setState({ loading: ( (xhr.loaded / xhr.total) * 100)  + '%' });
             } 
         );
@@ -140,10 +147,10 @@ class App extends Component {
 	|--------------------------------------------------------------------------
 	*/
     setLighting() {
-        const ambientLight = new THREE.AmbientLight( 0xd30000, 1.7 );
-        this.scene.add( ambientLight );
+        this.ambientLight = new THREE.AmbientLight( this.state.data.ambientLight, 1.7 );
+        this.scene.add( this.ambientLight );
 
-        const directionalLight = new THREE.DirectionalLight( '0xffffff' , 2);
+        const directionalLight = new THREE.DirectionalLight( 0xffffff , 2);
         this.scene.add( directionalLight );
     }
 
