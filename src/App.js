@@ -267,7 +267,7 @@ class App extends Component {
 
         return (
             <div>
-                <Loading loaded={this.state.loaded} >
+                <Loading loaded={this.state.loaded ? 1 : 0} >
                     <div className="sk-folding-cube">
                         <div className="sk-cube1 sk-cube"></div>
                         <div className="sk-cube2 sk-cube"></div>
@@ -302,6 +302,6 @@ const Loading = styled.div`
     z-index:99;
     transform:translateX(-50%) translateY(-50%);
     font-size:30px;
-    display: ${(props) => props.loaded === 'true' ? 'none' : 'block'}
+    display: ${(props) => props.loaded ? 'none' : 'block'}
     color:#000;
 `
