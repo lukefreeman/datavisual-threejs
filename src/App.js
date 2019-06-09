@@ -132,6 +132,8 @@ class App extends Component {
         loader.load( './model/DEM_RAST.pdf.gltf', 
             gltf => {
 
+                this.setState({ loaded: true });
+
                 this.model = gltf.scene;
                 this.scene.add(this.model);
 
@@ -151,11 +153,10 @@ class App extends Component {
                 this.flyAway();
 
             },
-            
-            xhr => {
-                console.log(xhr.loaded , xhr.total)
-                if(xhr.loaded === xhr.total) this.setState({ loaded: true });
-            } 
+
+            onLoad => {
+                
+            }
         );
     }
 
